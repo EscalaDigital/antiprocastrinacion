@@ -56,6 +56,8 @@ body {
     max-height: 550px;
     display: flex;
     flex-direction: column;
+    overflow: visible;
+    position: relative;
 }
 
 .column-header {
@@ -79,6 +81,7 @@ body {
 .task-list {
     flex: 1;
     overflow-y: auto;
+    overflow-x: visible;
     padding-right: 5px;
 }
 
@@ -208,6 +211,73 @@ body {
     padding: 4px 8px;
     font-size: 0.75rem;
     border-width: 1px;
+}
+
+/* Estilos específicos para botones de acción */
+.task-actions .btn-outline-info {
+    border-color: var(--info-color);
+    color: var(--info-color);
+}
+
+.task-actions .btn-outline-info:hover {
+    background-color: var(--info-color);
+    border-color: var(--info-color);
+    color: white;
+}
+
+/* Dropdown de impresión */
+.task-actions .btn-group .dropdown-menu {
+    min-width: 180px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    z-index: 1060 !important;
+    position: absolute !important;
+}
+
+.task-actions .dropdown-item {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    transition: var(--transition);
+}
+
+.task-actions .dropdown-item:hover {
+    background-color: var(--light-color);
+    color: var(--primary-color);
+}
+
+.task-actions .dropdown-item i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Asegurar que todos los dropdowns aparezcan por encima */
+.dropdown-menu {
+    z-index: 1055 !important;
+}
+
+.btn-group {
+    position: relative;
+    z-index: 1;
+}
+
+.btn-group.show .dropdown-menu {
+    z-index: 1060 !important;
+}
+
+/* Tooltip personalizado para botón de impresión */
+.task-actions .btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    z-index: 1000;
 }
 
 /* Badges y indicadores */
@@ -395,6 +465,33 @@ body {
     
     .task-item:hover {
         transform: none;
+    }
+    
+    /* Estilos específicos para impresión individual */
+    .print-task-item {
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+        padding: 10px;
+        page-break-inside: avoid;
+    }
+    
+    .print-task-title {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 8px;
+    }
+    
+    .print-task-description {
+        color: #666;
+        margin-bottom: 5px;
+    }
+    
+    .print-task-meta {
+        font-size: 0.9em;
+        color: #888;
+        border-top: 1px solid #eee;
+        padding-top: 5px;
+        margin-top: 8px;
     }
 }
 

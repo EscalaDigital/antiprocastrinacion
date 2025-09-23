@@ -130,6 +130,20 @@ try {
             ];
             break;
             
+        case 'get_task_tree':
+            $id = $_GET['id'] ?? 0;
+            $taskTree = $taskModel->getTaskTree($id);
+            
+            if (!$taskTree) {
+                throw new Exception('Tarea no encontrada');
+            }
+            
+            $response = [
+                'success' => true,
+                'data' => $taskTree
+            ];
+            break;
+            
         case 'search':
             $term = $_GET['term'] ?? '';
             if (empty($term)) {

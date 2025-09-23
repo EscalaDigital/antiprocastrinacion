@@ -196,6 +196,22 @@ class TaskManager {
                     <button class="btn btn-sm btn-outline-success" onclick="taskManager.showCreateTaskModal(${task.id})">
                         <i class="fas fa-plus"></i>
                     </button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Opciones de impresión">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTaskOnly(${task.id})">
+                                <i class="fas fa-file-alt me-2"></i>Solo esta tarea
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTaskPDF(${task.id})">
+                                <i class="fas fa-file-pdf me-2"></i>Generar PDF
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTask(${task.id})">
+                                <i class="fas fa-sitemap me-2"></i>Con subtareas
+                            </a></li>
+                        </ul>
+                    </div>
                     <button class="btn btn-sm btn-outline-danger" onclick="taskManager.deleteTask(${task.id})">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -450,6 +466,531 @@ class TaskManager {
         window.print();
     }
 
+    async printTask(taskId) {
+        try {
+            const response = await fetch(`api.php?action=get_task_tree&id=${taskId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.openPrintWindow(data.data);
+            } else {
+                this.showNotification('Error al cargar la tarea para imprimir', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error al imprimir la tarea', 'error');
+        }
+    }
+
+    async printTaskOnly(taskId) {
+        try {
+            const response = await fetch(`api.php?action=get&id=${taskId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.openPrintWindowSingle(data.data);
+            } else {
+                this.showNotification('Error al cargar la tarea para imprimir', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error al imprimir la tarea', 'error');
+        }
+    }
+
+    async printTaskPDF(taskId) {
+        try {
+            const response = await fetch(`api.php?action=get&id=${taskId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                this.generateTaskPDF(data.data);
+            } else {
+                this.showNotification('Error al cargar la tarea para generar PDF', 'error');
+            }
+        } catch (error) {
+            this.showNotification('Error al generar PDF', 'error');
+        }
+    }
+
+    openPrintWindow(taskData) {
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        const printContent = this.generatePrintContent(taskData);
+        
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        
+        // Dar tiempo para que se carguen los estilos y luego imprimir
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    }
+
+    openPrintWindowSingle(taskData) {
+        const printWindow = window.open('', '_blank', 'width=600,height=400');
+        const printContent = this.generateSingleTaskPrintContent(taskData);
+        
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        
+        // Dar tiempo para que se carguen los estilos y luego imprimir
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+    }
+
+    generateSingleTaskPrintContent(task) {
+        const currentDate = new Date().toLocaleDateString('es-ES');
+        const currentTime = new Date().toLocaleTimeString('es-ES');
+        
+        return `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Tarea: ${this.escapeHtml(task.title)}</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    margin: 30px;
+                    color: #333;
+                    line-height: 1.6;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 3px solid #0d6efd;
+                    padding-bottom: 15px;
+                    margin-bottom: 30px;
+                }
+                .app-title {
+                    font-size: 1.8em;
+                    color: #0d6efd;
+                    margin: 0;
+                }
+                .print-info {
+                    color: #666;
+                    font-size: 0.9em;
+                    margin-top: 5px;
+                }
+                .task-card {
+                    background: #f8f9fa;
+                    border: 2px solid #e9ecef;
+                    border-radius: 10px;
+                    padding: 25px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                .task-status {
+                    display: inline-block;
+                    padding: 5px 15px;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    margin-bottom: 15px;
+                    ${task.is_completed ? 
+                        'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;' :
+                        'background: #fff3cd; color: #856404; border: 1px solid #ffeaa7;'
+                    }
+                }
+                .task-title {
+                    font-size: 1.6em;
+                    font-weight: bold;
+                    color: #2c3e50;
+                    margin: 15px 0;
+                    ${task.is_completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}
+                }
+                .task-description {
+                    background: white;
+                    padding: 15px;
+                    border-radius: 5px;
+                    color: #555;
+                    margin: 15px 0;
+                    border-left: 4px solid #0d6efd;
+                }
+                .task-meta {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                .meta-item {
+                    background: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    border: 1px solid #dee2e6;
+                }
+                .meta-label {
+                    font-weight: bold;
+                    color: #495057;
+                    font-size: 0.9em;
+                }
+                .meta-value {
+                    color: #6c757d;
+                    margin-top: 3px;
+                }
+                .priority-indicator {
+                    display: inline-block;
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    margin-right: 8px;
+                    ${this.getPriorityColor(task.priority)}
+                }
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #dee2e6;
+                    text-align: center;
+                    color: #6c757d;
+                    font-size: 0.8em;
+                }
+                @media print {
+                    body { margin: 15px; }
+                    .task-card { box-shadow: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1 class="app-title">📋 Antiprocrastinación</h1>
+                <div class="print-info">Tarea individual impresa el ${currentDate} a las ${currentTime}</div>
+            </div>
+            
+            <div class="task-card">
+                <div class="task-status">
+                    ${task.is_completed ? '✅ COMPLETADA' : '⏳ PENDIENTE'}
+                </div>
+                
+                <h2 class="task-title">${this.escapeHtml(task.title)}</h2>
+                
+                ${task.description ? `
+                <div class="task-description">
+                    <strong>Descripción:</strong><br>
+                    ${this.escapeHtml(task.description)}
+                </div>
+                ` : ''}
+                
+                <div class="task-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">🎯 Prioridad</div>
+                        <div class="meta-value">
+                            <span class="priority-indicator"></span>
+                            ${this.getPriorityText(task.priority)}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <div class="meta-label">📊 Estado</div>
+                        <div class="meta-value">
+                            ${task.is_completed ? 'Completada' : 'Pendiente'}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <div class="meta-label">📅 Creada</div>
+                        <div class="meta-value">
+                            ${new Date(task.created_at).toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <div class="meta-label">🔄 Actualizada</div>
+                        <div class="meta-value">
+                            ${new Date(task.updated_at).toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                Generado por Antiprocrastinación - Gestor de Micro-tareas<br>
+                <em>Esta es una tarea individual sin subtareas</em>
+            </div>
+        </body>
+        </html>
+        `;
+    }
+
+    generateTaskPDF(task) {
+        // Verificar si jsPDF está disponible
+        if (typeof window.jsPDF === 'undefined') {
+            // Cargar jsPDF dinámicamente
+            this.loadJsPDF().then(() => {
+                this.createPDF(task);
+            }).catch(() => {
+                this.showNotification('No se pudo cargar la librería PDF. Usando impresión normal...', 'warning');
+                this.printTaskOnly(task.id);
+            });
+        } else {
+            this.createPDF(task);
+        }
+    }
+
+    async loadJsPDF() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    createPDF(task) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Configuración
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        const lineHeight = 7;
+        let yPosition = margin;
+        
+        // Función para añadir texto con wrap
+        const addText = (text, x, y, maxWidth, fontSize = 12) => {
+            doc.setFontSize(fontSize);
+            const lines = doc.splitTextToSize(text, maxWidth);
+            doc.text(lines, x, y);
+            return y + (lines.length * lineHeight);
+        };
+        
+        // Header
+        doc.setFontSize(20);
+        doc.setTextColor(13, 110, 253);
+        doc.text('📋 Antiprocrastinación', margin, yPosition);
+        yPosition += 10;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        const currentDate = new Date().toLocaleDateString('es-ES');
+        const currentTime = new Date().toLocaleTimeString('es-ES');
+        doc.text(`Tarea individual generada el ${currentDate} a las ${currentTime}`, margin, yPosition);
+        yPosition += 15;
+        
+        // Línea separadora
+        doc.setDrawColor(13, 110, 253);
+        doc.setLineWidth(1);
+        doc.line(margin, yPosition, pageWidth - margin, yPosition);
+        yPosition += 15;
+        
+        // Estado de la tarea
+        doc.setFontSize(12);
+        if (task.is_completed) {
+            doc.setTextColor(21, 87, 36);
+            doc.text('✅ COMPLETADA', margin, yPosition);
+        } else {
+            doc.setTextColor(133, 100, 4);
+            doc.text('⏳ PENDIENTE', margin, yPosition);
+        }
+        yPosition += 15;
+        
+        // Título de la tarea
+        doc.setFontSize(16);
+        doc.setTextColor(44, 62, 80);
+        yPosition = addText(task.title, margin, yPosition, pageWidth - 2 * margin, 16);
+        yPosition += 10;
+        
+        // Descripción
+        if (task.description) {
+            doc.setFontSize(12);
+            doc.setTextColor(80, 80, 80);
+            doc.text('Descripción:', margin, yPosition);
+            yPosition += 8;
+            
+            doc.setTextColor(100, 100, 100);
+            yPosition = addText(task.description, margin, yPosition, pageWidth - 2 * margin);
+            yPosition += 10;
+        }
+        
+        // Metadatos
+        doc.setFontSize(12);
+        doc.setTextColor(80, 80, 80);
+        doc.text('Información de la tarea:', margin, yPosition);
+        yPosition += 10;
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        
+        const metaData = [
+            `🎯 Prioridad: ${this.getPriorityText(task.priority)}`,
+            `📊 Estado: ${task.is_completed ? 'Completada' : 'Pendiente'}`,
+            `📅 Creada: ${new Date(task.created_at).toLocaleDateString('es-ES')}`,
+            `🔄 Actualizada: ${new Date(task.updated_at).toLocaleDateString('es-ES')}`,
+            `📍 Nivel: ${task.column_level}`
+        ];
+        
+        metaData.forEach(item => {
+            doc.text(item, margin, yPosition);
+            yPosition += 6;
+        });
+        
+        // Footer
+        yPosition = doc.internal.pageSize.getHeight() - 20;
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Generado por Antiprocrastinación - Gestor de Micro-tareas', margin, yPosition);
+        doc.text('Esta es una tarea individual sin subtareas', margin, yPosition + 5);
+        
+        // Guardar PDF
+        const fileName = `tarea-${task.id}-${task.title.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '-')}.pdf`;
+        doc.save(fileName);
+        
+        this.showNotification('PDF generado exitosamente', 'success');
+    }
+
+    getPriorityColor(priority) {
+        switch(priority) {
+            case 'high': return 'background: #dc3545;';
+            case 'medium': return 'background: #ffc107;';
+            case 'low': return 'background: #198754;';
+            default: return 'background: #6c757d;';
+        }
+    }
+
+    generatePrintContent(task) {
+        const currentDate = new Date().toLocaleDateString('es-ES');
+        
+        let html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Tarea: ${this.escapeHtml(task.title)}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                    color: #333;
+                }
+                .header {
+                    border-bottom: 2px solid #0d6efd;
+                    padding-bottom: 10px;
+                    margin-bottom: 20px;
+                }
+                .task-main {
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                }
+                .task-title {
+                    font-size: 1.5em;
+                    font-weight: bold;
+                    color: #0d6efd;
+                    margin-bottom: 10px;
+                }
+                .task-description {
+                    color: #666;
+                    margin-bottom: 10px;
+                }
+                .task-meta {
+                    font-size: 0.9em;
+                    color: #888;
+                }
+                .subtasks {
+                    margin-top: 20px;
+                }
+                .subtask {
+                    background: white;
+                    border: 1px solid #ddd;
+                    padding: 10px;
+                    margin-bottom: 10px;
+                    border-radius: 3px;
+                }
+                .subtask-title {
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                .subtask-description {
+                    color: #666;
+                    font-size: 0.9em;
+                }
+                .priority-high { border-left: 4px solid #dc3545; }
+                .priority-medium { border-left: 4px solid #ffc107; }
+                .priority-low { border-left: 4px solid #198754; }
+                .completed {
+                    opacity: 0.7;
+                    text-decoration: line-through;
+                }
+                .checkbox {
+                    margin-right: 10px;
+                }
+                @media print {
+                    body { margin: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>📋 Antiprocrastinación</h1>
+                <p>Impreso el: ${currentDate}</p>
+            </div>
+            
+            <div class="task-main priority-${task.priority} ${task.is_completed ? 'completed' : ''}">
+                <div class="task-title">
+                    ${task.is_completed ? '☑' : '☐'} ${this.escapeHtml(task.title)}
+                </div>
+                ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                <div class="task-meta">
+                    Prioridad: ${this.getPriorityText(task.priority)} | 
+                    Estado: ${task.is_completed ? 'Completada' : 'Pendiente'} |
+                    Nivel: ${task.column_level}
+                </div>
+            </div>
+        `;
+        
+        if (task.children && task.children.length > 0) {
+            html += `
+            <div class="subtasks">
+                <h2>Subtareas (${task.children.length})</h2>
+                ${this.generateSubtasksHTML(task.children)}
+            </div>
+            `;
+        }
+        
+        html += `
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #888; font-size: 0.8em;">
+                Generado por Antiprocrastinación - Gestor de Micro-tareas
+            </div>
+        </body>
+        </html>
+        `;
+        
+        return html;
+    }
+
+    generateSubtasksHTML(tasks) {
+        let html = '';
+        
+        tasks.forEach(task => {
+            html += `
+            <div class="subtask priority-${task.priority} ${task.is_completed ? 'completed' : ''}">
+                <div class="subtask-title">
+                    <span class="checkbox">${task.is_completed ? '☑' : '☐'}</span>
+                    ${this.escapeHtml(task.title)}
+                </div>
+                ${task.description ? `<div class="subtask-description">${this.escapeHtml(task.description)}</div>` : ''}
+                <div style="font-size: 0.8em; color: #888; margin-top: 5px;">
+                    Prioridad: ${this.getPriorityText(task.priority)} | Estado: ${task.is_completed ? 'Completada' : 'Pendiente'}
+                </div>
+            </div>
+            `;
+            
+            if (task.children && task.children.length > 0) {
+                html += `<div style="margin-left: 20px;">${this.generateSubtasksHTML(task.children)}</div>`;
+            }
+        });
+        
+        return html;
+    }
+
+    getPriorityText(priority) {
+        switch(priority) {
+            case 'high': return 'Alta';
+            case 'medium': return 'Media';
+            case 'low': return 'Baja';
+            default: return 'Media';
+        }
+    }
+
     exportTasks() {
         // Implementación futura: exportar a JSON/CSV
         this.showNotification('Función de exportación en desarrollo', 'info');
@@ -541,6 +1082,18 @@ function showStats() {
 
 function printTasks() {
     taskManager.printTasks();
+}
+
+function printTask(taskId) {
+    taskManager.printTask(taskId);
+}
+
+function printTaskOnly(taskId) {
+    taskManager.printTaskOnly(taskId);
+}
+
+function printTaskPDF(taskId) {
+    taskManager.printTaskPDF(taskId);
 }
 
 function exportTasks() {

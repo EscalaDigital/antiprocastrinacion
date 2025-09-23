@@ -224,4 +224,31 @@ class Task {
         
         return $task;
     }
+    
+    /**
+     * Obtiene el árbol completo de una tarea para impresión
+     */
+    public function getTaskTree($taskId) {
+        $task = $this->getById($taskId);
+        
+        if (!$task) {
+            return null;
+        }
+        
+        return $this->buildCompleteTaskTree($task);
+    }
+    
+    /**
+     * Construye recursivamente el árbol completo de tareas para impresión
+     */
+    private function buildCompleteTaskTree($task) {
+        $task['children'] = [];
+        $children = $this->getChildTasks($task['id']);
+        
+        foreach ($children as $child) {
+            $task['children'][] = $this->buildCompleteTaskTree($child);
+        }
+        
+        return $task;
+    }
 }
