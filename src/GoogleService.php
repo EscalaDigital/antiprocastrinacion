@@ -17,9 +17,9 @@ class GoogleService {
         $this->client->setAccessType('offline');
         $this->client->setPrompt('consent');
         $this->client->setScopes([
-            Google_Service_Tasks::TASKS,
-            Google_Service_Calendar::CALENDAR_EVENTS,
-            Google_Service_Gmail::GMAIL_READONLY,
+            'https://www.googleapis.com/auth/tasks',
+            'https://www.googleapis.com/auth/calendar.events',
+            'https://www.googleapis.com/auth/gmail.readonly',
             'openid',
             'https://www.googleapis.com/auth/userinfo.email'
         ]);
@@ -73,7 +73,8 @@ class GoogleService {
             }
             // Fallback: usar endpoint userinfo si hay scope adecuado
             if ($googleUserId === 'single-user') {
-                $oauth2 = new Google_Service_Oauth2($this->client);
+                $oauth2Class = 'Google_Service_Oauth2';
+                $oauth2 = new $oauth2Class($this->client);
                 $userInfo = $oauth2->userinfo->get();
                 if ($userInfo && $userInfo->getId()) {
                     $googleUserId = $userInfo->getId();
@@ -122,8 +123,10 @@ class GoogleService {
     // Operaciones de Tasks
     public function createGoogleTask(string $title, string $notes = ''): ?string {
         $this->ensureTokenFresh();
-        $service = new Google_Service_Tasks($this->client);
-        $task = new Google_Service_Tasks_Task([
+        $tasksServiceClass = 'Google_Service_Tasks';
+        $tasksTaskClass = 'Google_Service_Tasks_Task';
+        $service = new $tasksServiceClass($this->client);
+        $task = new $tasksTaskClass([
             'title' => $title,
             'notes' => $notes
         ]);
@@ -132,19 +135,47 @@ class GoogleService {
     }
 
     // Operaciones de Calendar
-    public function createCalendarEvent(string $summary, ?string $description = null, ?DateTime $start = null, ?DateTime $end = null): ?string {
+    public function createCalendarEvent(string $summary, ?string $description = null, ?DateTime $start = null, ?DateTime $end = null, array $options = []): ?string {
         $this->ensureTokenFresh();
-        $service = new Google_Service_Calendar($this->client);
-        $event = new Google_Service_Calendar_Event([
+    $calendarServiceClass = 'Google_Service_Calendar';
+    $service = new $calendarServiceClass($this->client);
+
+        $eventData = [
             'summary' => $summary,
             'description' => $description,
-            'start' => [
+        ];
+
+        $allDay = !empty($options['all_day']);
+        if ($allDay) {
+            $startDate = $options['start_date'] ?? (new DateTime())->format('Y-m-d');
+            $endDate = $options['end_date'] ?? (new DateTime('+1 day'))->format('Y-m-d');
+            $eventData['start'] = ['date' => $startDate];
+            $eventData['end'] = ['date' => $endDate];
+        } else {
+            $eventData['start'] = [
                 'dateTime' => ($start ?: new DateTime())->format(DateTime::ATOM)
-            ],
-            'end' => [
+            ];
+            $eventData['end'] = [
                 'dateTime' => ($end ?: (new DateTime('+1 hour')))->format(DateTime::ATOM)
-            ],
-        ]);
+            ];
+        }
+
+        if (!empty($options['location'])) {
+            $eventData['location'] = (string)$options['location'];
+        }
+
+        if (isset($options['reminder_minutes']) && $options['reminder_minutes'] !== null) {
+            $minutes = max(0, (int)$options['reminder_minutes']);
+            $eventData['reminders'] = [
+                'useDefault' => false,
+                'overrides' => [
+                    ['method' => 'popup', 'minutes' => $minutes]
+                ]
+            ];
+        }
+
+        $calendarEventClass = 'Google_Service_Calendar_Event';
+        $event = new $calendarEventClass($eventData);
         $created = $service->events->insert('primary', $event);
         return $created->getId();
     }
@@ -152,13 +183,15 @@ class GoogleService {
     // Gmail helpers
     public function getGmailMessageById(string $messageId) {
         $this->ensureTokenFresh();
-        $service = new Google_Service_Gmail($this->client);
+        $gmailServiceClass = 'Google_Service_Gmail';
+        $service = new $gmailServiceClass($this->client);
         return $service->users_messages->get('me', $messageId, ['format' => 'metadata', 'metadataHeaders' => ['Subject', 'From', 'Date']]);
     }
 
     public function getGmailThreadFirstMessage(string $threadId) {
         $this->ensureTokenFresh();
-        $service = new Google_Service_Gmail($this->client);
+        $gmailServiceClass = 'Google_Service_Gmail';
+        $service = new $gmailServiceClass($this->client);
         $thread = $service->users_threads->get('me', $threadId, ['format' => 'metadata', 'metadataHeaders' => ['Subject', 'From', 'Date']]);
         $messages = $thread->getMessages();
         return $messages && count($messages) > 0 ? $messages[0] : null;

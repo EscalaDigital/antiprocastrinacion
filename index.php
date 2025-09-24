@@ -213,6 +213,59 @@ try {
         </div>
     </div>
 
+    <!-- Modal crear evento Calendar -->
+    <div class="modal fade" id="calendarModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear evento en Google Calendar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="calendarForm">
+                        <input type="hidden" id="calendarTaskId">
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label">Fecha</label>
+                                <input type="date" class="form-control" id="calDate" required>
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">Inicio</label>
+                                <input type="time" class="form-control" id="calStartTime" value="09:00" required>
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">Fin</label>
+                                <input type="time" class="form-control" id="calEndTime" value="10:00" required>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label">Recordatorio (min)</label>
+                                <input type="number" class="form-control" id="calReminder" value="30" min="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Ubicación</label>
+                                <input type="text" class="form-control" id="calLocation" placeholder="Opcional">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Notas del evento</label>
+                            <textarea class="form-control" id="calNotes" rows="3" placeholder="Opcional"></textarea>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="calAllDay">
+                            <label class="form-check-label" for="calAllDay">Evento de todo el día</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="submitCalendarEvent()">Crear evento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast para notificaciones -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="notificationToast" class="toast" role="alert">

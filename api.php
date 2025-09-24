@@ -97,11 +97,37 @@ try {
             if (!$t) throw new Exception('Tarea no encontrada');
             $startIso = $_POST['start'] ?? null;
             $endIso = $_POST['end'] ?? null;
-            $start = $startIso ? new DateTime($startIso) : new DateTime();
-            $end = $endIso ? new DateTime($endIso) : (new DateTime('+1 hour'));
+            $allDay = !empty($_POST['all_day']);
+            $reminderMinutes = isset($_POST['reminder_minutes']) && $_POST['reminder_minutes'] !== '' ? (int)$_POST['reminder_minutes'] : null;
+            $location = isset($_POST['location']) ? trim((string)$_POST['location']) : null;
+            $notes = isset($_POST['notes']) ? trim((string)$_POST['notes']) : '';
+
+            $desc = (string)($t['description'] ?? '');
+            if ($notes !== '') {
+                $desc = $desc ? ($desc . "\n\nNotas:\n" . $notes) : $notes;
+            }
+
             $google = new GoogleService();
             if (!$google->isConnected()) throw new Exception('Conecta con Google primero');
-            $eventId = $google->createCalendarEvent($t['title'], (string)($t['description'] ?? ''), $start, $end);
+
+            $options = [
+                'all_day' => $allDay,
+                'reminder_minutes' => $reminderMinutes,
+                'location' => $location,
+            ];
+
+            if ($allDay) {
+                $startDate = $startIso ? substr($startIso, 0, 10) : date('Y-m-d');
+                $endDate = date('Y-m-d', strtotime($startDate . ' +1 day'));
+                $options['start_date'] = $startDate;
+                $options['end_date'] = $endDate;
+                $eventId = $google->createCalendarEvent($t['title'], $desc, null, null, $options);
+            } else {
+                $start = $startIso ? new DateTime($startIso) : new DateTime();
+                $end = $endIso ? new DateTime($endIso) : (new DateTime('+1 hour'));
+                $eventId = $google->createCalendarEvent($t['title'], $desc, $start, $end, $options);
+            }
+
             if ($eventId) {
                 $taskModel->updateGoogleCalendarId($id, $eventId);
                 $response = ['success' => true, 'message' => 'Evento creado en Calendar', 'data' => ['google_calendar_event_id' => $eventId]];

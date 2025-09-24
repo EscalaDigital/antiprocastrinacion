@@ -414,20 +414,20 @@ class TaskManager {
     }
 
     async createCalendarEvent(taskId) {
-        try {
-            const formData = new FormData();
-            formData.append('action', 'create_calendar_event');
-            formData.append('id', taskId);
-            const response = await fetch('api.php', { method: 'POST', body: formData });
-            const data = await response.json();
-            if (data.success) {
-                this.showNotification('Evento creado en Calendar', 'success');
-            } else {
-                this.showNotification(data.message || 'Error creando evento', 'error');
-            }
-        } catch (e) {
-            this.showNotification('Error creando evento', 'error');
-        }
+        // Abrir modal con valores por defecto
+        document.getElementById('calendarTaskId').value = taskId;
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        document.getElementById('calDate').value = `${y}-${m}-${d}`;
+        document.getElementById('calStartTime').value = '09:00';
+        document.getElementById('calEndTime').value = '10:00';
+        document.getElementById('calReminder').value = 30;
+        document.getElementById('calLocation').value = '';
+        document.getElementById('calNotes').value = '';
+        document.getElementById('calAllDay').checked = false;
+        new bootstrap.Modal(document.getElementById('calendarModal')).show();
     }
 
     async toggleTaskComplete(taskId) {
@@ -1208,6 +1208,53 @@ function exportTasks() {
 
 function showHelp() {
     taskManager.showHelp();
+}
+
+// Submit del modal de Calendar
+async function submitCalendarEvent() {
+    const taskId = document.getElementById('calendarTaskId').value;
+    const date = document.getElementById('calDate').value;
+    const startTime = document.getElementById('calStartTime').value;
+    const endTime = document.getElementById('calEndTime').value;
+    const reminder = document.getElementById('calReminder').value;
+    const location = document.getElementById('calLocation').value.trim();
+    const notes = document.getElementById('calNotes').value.trim();
+    const allDay = document.getElementById('calAllDay').checked;
+
+    if (!date) { taskManager.showNotification('Selecciona una fecha', 'error'); return; }
+    if (!allDay && (!startTime || !endTime)) { taskManager.showNotification('Indica hora de inicio y fin', 'error'); return; }
+
+    // Construir ISO simple (sin zona) para backend; el backend aplicará TZ
+    let startIso, endIso;
+    if (allDay) {
+        startIso = `${date}T00:00:00`;
+        endIso = `${date}T23:59:00`;
+    } else {
+        startIso = `${date}T${startTime}:00`;
+        endIso = `${date}T${endTime}:00`;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'create_calendar_event');
+        formData.append('id', taskId);
+        formData.append('start', startIso);
+        formData.append('end', endIso);
+        if (reminder !== '') formData.append('reminder_minutes', reminder);
+        if (location) formData.append('location', location);
+        if (notes) formData.append('notes', notes);
+        if (allDay) formData.append('all_day', '1');
+        const response = await fetch('api.php', { method: 'POST', body: formData });
+        const data = await response.json();
+        if (data.success) {
+            taskManager.showNotification('Evento creado en Calendar', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('calendarModal')).hide();
+        } else {
+            taskManager.showNotification(data.message || 'Error creando evento', 'error');
+        }
+    } catch (e) {
+        taskManager.showNotification('Error creando evento', 'error');
+    }
 }
 
 // Inicializar aplicación
