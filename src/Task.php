@@ -200,6 +200,83 @@ class Task {
         $result = $stmt->fetch();
         return $result['next_position'];
     }
+
+    /**
+     * Actualiza el padre de una tarea (reparentar) y ajusta niveles/posición
+     */
+    public function updateParent($id, $newParentId = null) {
+        $task = $this->getById($id);
+        if (!$task) return false;
+
+        // Normalizar parent nulo
+        if ($newParentId === '' || $newParentId === 'null') {
+            $newParentId = null;
+        }
+
+        // Validaciones básicas
+        if ($newParentId !== null) {
+            if ((int)$newParentId === (int)$id) {
+                throw new Exception('No puedes hacer una tarea hija de sí misma');
+            }
+            $parent = $this->getById($newParentId);
+            if (!$parent) {
+                throw new Exception('Padre destino no existe');
+            }
+            // Evitar ciclos: el nuevo padre no puede ser descendiente del nodo movido
+            $desc = $this->collectDescendantIds($id);
+            if (in_array((int)$newParentId, $desc, true)) {
+                throw new Exception('No puedes mover una tarea dentro de su propio subárbol');
+            }
+            $newLevel = ((int)$parent['column_level']) + 1;
+        } else {
+            $newLevel = 1;
+        }
+
+        $oldLevel = (int)$task['column_level'];
+        $levelDelta = $newLevel - $oldLevel;
+
+        // Nueva posición al final del grupo destino
+        $newPosition = $this->getNextPosition($newParentId, $newLevel);
+
+        // Actualizar tarea movida
+        $sql = "UPDATE tasks SET parent_id = ?, column_level = ?, position_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        $this->db->query($sql, [$newParentId, $newLevel, $newPosition, $id]);
+
+        // Ajustar niveles de todos los descendientes si cambia el nivel
+        if ($levelDelta !== 0) {
+            $descendants = $this->collectDescendantIds($id);
+            if (!empty($descendants)) {
+                foreach ($descendants as $childId) {
+                    $this->db->query(
+                        "UPDATE tasks SET column_level = column_level + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        [$levelDelta, $childId]
+                    );
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Recoge recursivamente los IDs de todos los descendientes de una tarea
+     */
+    private function collectDescendantIds($id) {
+        $result = [];
+        $toVisit = [$id];
+        // No incluir el propio id en el resultado, sólo hijos y siguientes niveles
+        while (!empty($toVisit)) {
+            $current = array_pop($toVisit);
+            $stmt = $this->db->query("SELECT id FROM tasks WHERE parent_id = ?", [$current]);
+            $children = $stmt->fetchAll();
+            foreach ($children as $row) {
+                $cid = (int)$row['id'];
+                $result[] = $cid;
+                $toVisit[] = $cid;
+            }
+        }
+        return $result;
+    }
     
     /**
      * Obtiene estadísticas de tareas

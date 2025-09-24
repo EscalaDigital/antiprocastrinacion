@@ -134,6 +134,11 @@ body {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
+/* Drag & drop cues */
+.task-item.dragging { opacity: 0.6; }
+.drop-target { outline: 2px dashed var(--primary); outline-offset: 2px; }
+.task-list.drop-target { background: rgba(13,110,253,0.06); }
+
 .task-item.completed .task-title {
     text-decoration: line-through;
     color: #6c757d;
@@ -190,10 +195,15 @@ body {
 }
 
 .task-description {
-    font-size: 0.85rem;
-    line-height: 1.4;
+    font-size: 0.9rem;
+    line-height: 1.5;
     margin-bottom: 8px;
 }
+
+/* Descripción colapsable */
+.desc-clamp{ display:-webkit-box; -webkit-line-clamp:2; line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.desc-expanded{ -webkit-line-clamp:unset; line-clamp:unset; overflow:visible; }
+.desc-toggle{ color:var(--primary); font-size:.8rem; cursor:pointer; user-select:none; }
 
 .task-actions { display: flex; gap: 5px; }
 
@@ -631,13 +641,20 @@ body{background:var(--bg); color:var(--text);}
 /* Anillo de foco visible para accesibilidad */
 *:focus-visible{outline:2px solid rgba(37,99,235,.35); outline-offset:2px;} 
 
-/* Forzar estética clara aunque el SO esté en oscuro */
-@media (prefers-color-scheme: dark){
-    :root{--bg:#f7fbff; --surface:#ffffff; --surface-muted:#f1f5f9; --text:#0f172a; --text-muted:#475569; --border:#e2e8f0;}
-    .navbar{border-color:var(--border);} 
-    .task-item:hover{background:#f8fafc; border-color:#dbe3ea;} 
-    .dropdown-menu{background:var(--surface);} 
+/* Tema oscuro opcional: activar con html[data-theme="dark"] */
+html[data-theme="dark"]{
+    --bg:#0b1220; --surface:#0f172a; --surface-muted:#0b1220; 
+    --text:#e2e8f0; --text-muted:#94a3b8; --border:#1f2937; 
+    --primary:#60a5fa; --success:#22c55e; --warning:#fbbf24; --danger:#f87171; --info:#38bdf8;
+    --primary-color: var(--primary);
+    --success-color: var(--success);
+    --warning-color: var(--warning);
+    --danger-color: var(--danger);
+    --info-color: var(--info);
 }
+html[data-theme="dark"] .navbar{border-color:var(--border);} 
+html[data-theme="dark"] .task-item:hover{background:#111827; border-color:#1f2937;} 
+html[data-theme="dark"] .dropdown-menu{background:var(--surface);} 
 
     /* Acentos por nivel de columna: más marcada la principal y más claro en profundidad */
     .task-column{position:relative;}

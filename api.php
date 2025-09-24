@@ -325,6 +325,30 @@ try {
                 throw new Exception('No se pudo actualizar la posición');
             }
             break;
+        
+        case 'update_parent':
+            $id = $_POST['id'] ?? 0;
+            // parent_id puede ser null, string vacío, o un número
+            $parentId = array_key_exists('parent_id', $_POST) ? $_POST['parent_id'] : null;
+            if ($parentId === '' || $parentId === 'null') { $parentId = null; }
+
+            if (!$id) throw new Exception('ID requerido');
+            try {
+                $ok = $taskModel->updateParent($id, $parentId);
+                if ($ok) {
+                    $updatedTask = $taskModel->getById($id);
+                    $response = [
+                        'success' => true,
+                        'message' => 'Padre actualizado',
+                        'data' => $updatedTask
+                    ];
+                } else {
+                    throw new Exception('No se pudo reubicar la tarea');
+                }
+            } catch (Exception $ex) {
+                throw new Exception($ex->getMessage());
+            }
+            break;
             
         default:
             throw new Exception('Acción no válida');

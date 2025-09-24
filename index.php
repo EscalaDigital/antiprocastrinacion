@@ -62,6 +62,8 @@ try {
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="showHelp()"><i class="fas fa-question-circle me-2"></i>Ayuda</a></li>
                         <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="toggleTheme()"><i class="fas fa-moon me-2"></i>Alternar tema</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="taskManager.createTaskFromGmailPrompt()"><i class="fab fa-google me-2"></i>Crear tarea desde Gmail</a></li>
                     </ul>
                 </div>

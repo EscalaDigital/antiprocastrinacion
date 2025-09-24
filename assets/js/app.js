@@ -159,6 +159,14 @@ class TaskManager {
 
         const taskList = document.createElement('div');
         taskList.className = 'task-list';
+        // Soporte drop en la lista para mover a este contenedor (raíz o hijo actual)
+        taskList.dataset.dropLevel = level;
+        if (parentTask && parentTask.id) {
+            taskList.dataset.dropParentId = String(parentTask.id);
+        } else {
+            taskList.dataset.dropParentId = '';
+        }
+        this.attachListDropHandlers(taskList);
         
         tasks.forEach(task => {
             const taskElement = this.createTaskElement(task, level);
@@ -175,6 +183,7 @@ class TaskManager {
         element.className = `task-item ${task.is_completed ? 'completed' : ''} priority-${task.priority}`;
         element.dataset.taskId = task.id;
         element.dataset.hasChildren = task.has_children || 'false';
+        element.draggable = true;
         
         element.innerHTML = `
             <div class="task-content">
@@ -202,7 +211,10 @@ class TaskManager {
                         </ul>
                     </div>
                 </div>
-                ${task.description ? `<div class="task-description text-muted small mt-1">${this.escapeHtml(task.description)}</div>` : ''}
+                ${task.description ? `
+                <div class="task-description text-muted mt-1 desc-clamp" id="desc-${task.id}">${this.escapeHtml(task.description)}</div>
+                <div class="desc-toggle" onclick="taskManager.toggleDescription(${task.id})">Ver más</div>
+                ` : ''}
                 <div class="task-actions mt-2">
                     <button class="btn btn-sm btn-outline-success" onclick="taskManager.showCreateTaskModal(${task.id})">
                         <i class="fas fa-plus me-1"></i> Subtarea
@@ -244,7 +256,81 @@ class TaskManager {
             this.selectTask(task, element, level);
         });
 
+        // Drag & drop handlers
+        element.addEventListener('dragstart', (ev) => {
+            ev.stopPropagation();
+            ev.dataTransfer.setData('text/plain', String(task.id));
+            ev.dataTransfer.effectAllowed = 'move';
+            element.classList.add('dragging');
+        });
+        element.addEventListener('dragend', () => {
+            element.classList.remove('dragging');
+            document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+        });
+        // Permitir soltar sobre otra tarea para convertirla en padre
+        element.addEventListener('dragover', (ev) => {
+            ev.preventDefault();
+            ev.dataTransfer.dropEffect = 'move';
+            element.classList.add('drop-target');
+        });
+        element.addEventListener('dragleave', () => {
+            element.classList.remove('drop-target');
+        });
+        element.addEventListener('drop', async (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            element.classList.remove('drop-target');
+            const draggedId = parseInt(ev.dataTransfer.getData('text/plain'), 10);
+            if (!draggedId || draggedId === task.id) return;
+            await this.moveTask(draggedId, task.id);
+        });
+
         return element;
+    }
+
+    attachListDropHandlers(listEl) {
+        listEl.addEventListener('dragover', (ev) => {
+            ev.preventDefault();
+            ev.dataTransfer.dropEffect = 'move';
+            listEl.classList.add('drop-target');
+        });
+        listEl.addEventListener('dragleave', () => {
+            listEl.classList.remove('drop-target');
+        });
+        listEl.addEventListener('drop', async (ev) => {
+            ev.preventDefault();
+            listEl.classList.remove('drop-target');
+            const draggedId = parseInt(ev.dataTransfer.getData('text/plain'), 10);
+            if (!draggedId) return;
+            const parentIdAttr = listEl.dataset.dropParentId || '';
+            const newParentId = parentIdAttr === '' ? null : parseInt(parentIdAttr, 10);
+            await this.moveTask(draggedId, newParentId);
+        });
+    }
+
+    async moveTask(taskId, newParentId) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'update_parent');
+            formData.append('id', String(taskId));
+            if (newParentId === null || typeof newParentId === 'undefined') {
+                formData.append('parent_id', '');
+            } else {
+                formData.append('parent_id', String(newParentId));
+            }
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.showNotification('Tarea movida', 'success');
+                // Recargar columnas a partir de la raíz para simplificar
+                await this.loadTasks();
+                await this.loadStats();
+            } else {
+                this.showNotification(data.message || 'No se pudo mover la tarea', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error moviendo la tarea', 'error');
+        }
     }
 
     async selectTask(task, element, level) {
@@ -282,6 +368,20 @@ class TaskManager {
             } catch (error) {
                 console.error('Error loading children:', error);
             }
+        }
+    }
+
+    toggleDescription(taskId){
+        const el = document.getElementById(`desc-${taskId}`);
+        if(!el) return;
+        const toggle = el.nextElementSibling;
+        const expanded = el.classList.toggle('desc-expanded');
+        if(expanded){
+            el.classList.remove('desc-clamp');
+            if(toggle) toggle.textContent = 'Ver menos';
+        } else {
+            el.classList.add('desc-clamp');
+            if(toggle) toggle.textContent = 'Ver más';
         }
     }
 
@@ -1268,5 +1368,27 @@ async function submitCalendarEvent() {
 
 // Inicializar aplicación
 document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar tema guardado
+    try {
+        const savedTheme = localStorage.getItem('ap_theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    } catch (e) {}
     taskManager = new TaskManager();
 });
+
+// Alternar tema (claro/oscuro) y persistir
+function toggleTheme(){
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    if (isDark){
+        html.removeAttribute('data-theme');
+        try { localStorage.setItem('ap_theme', 'light'); } catch(e){}
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        try { localStorage.setItem('ap_theme', 'dark'); } catch(e){}
+    }
+}
