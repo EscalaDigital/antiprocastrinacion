@@ -300,6 +300,20 @@ try {
                 'data' => $results
             ];
             break;
+        
+        case 'filter':
+            $filters = [
+                'priorities' => isset($_POST['priorities']) ? (is_array($_POST['priorities']) ? $_POST['priorities'] : explode(',', (string)$_POST['priorities'])) : [],
+                'status' => $_POST['status'] ?? 'all',
+                'has_gmail' => isset($_POST['has_gmail']) ? ($_POST['has_gmail'] === '1' || $_POST['has_gmail'] === 'true') : null,
+                'level_min' => isset($_POST['level_min']) && $_POST['level_min'] !== '' ? (int)$_POST['level_min'] : null,
+                'level_max' => isset($_POST['level_max']) && $_POST['level_max'] !== '' ? (int)$_POST['level_max'] : null,
+                'text' => $_POST['text'] ?? null,
+                'order' => $_POST['order'] ?? 'priority',
+            ];
+            $results = $taskModel->filter($filters);
+            $response = [ 'success' => true, 'data' => $results ];
+            break;
             
         case 'get_stats':
             $stats = $taskModel->getStats();

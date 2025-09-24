@@ -38,8 +38,8 @@
     <!-- Main Content -->
     <div class="container-fluid mt-3">
         <!-- Barra de herramientas -->
-        <div class="row mb-3">
-            <div class="col-md-6">
+        <div class="row mb-3 align-items-center g-2">
+            <div class="col-md-5">
                 <div class="input-group">
                     <input type="text" id="searchInput" class="form-control" placeholder="Buscar tareas...">
                     <button class="btn btn-outline-primary" type="button" onclick="searchTasks()">
@@ -47,7 +47,78 @@
                     </button>
                 </div>
             </div>
-            <div class="col-md-6 text-end">
+            <div class="col-md-7 text-end">
+                <div class="btn-group me-2">
+                    <button class="btn btn-outline-warning" onclick="taskManager.quickUrgentFilter()" title="Ver urgentes (Alta)">
+                        <i class="fas fa-bolt me-1"></i> Urgentes
+                    </button>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-filter me-1"></i> Filtros
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 320px;">
+                            <div class="mb-2">
+                                <div class="form-label mb-1">Prioridad</div>
+                                <div class="d-flex gap-2">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="f-prio-high" value="high" checked>
+                                        <label class="form-check-label text-danger" for="f-prio-high">Alta</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="f-prio-medium" value="medium" checked>
+                                        <label class="form-check-label text-warning" for="f-prio-medium">Media</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="f-prio-low" value="low" checked>
+                                        <label class="form-check-label text-success" for="f-prio-low">Baja</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label">Estado</label>
+                                    <select id="f-status" class="form-select form-select-sm">
+                                        <option value="all">Todos</option>
+                                        <option value="pending">Pendientes</option>
+                                        <option value="completed">Completadas</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Con Gmail</label>
+                                    <select id="f-gmail" class="form-select form-select-sm">
+                                        <option value="any">Cualquiera</option>
+                                        <option value="1">Sí</option>
+                                        <option value="0">No</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label">Nivel mín.</label>
+                                    <input id="f-level-min" type="number" class="form-control form-control-sm" min="1" placeholder="1">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Nivel máx.</label>
+                                    <input id="f-level-max" type="number" class="form-control form-control-sm" min="1" placeholder="5">
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Ordenar por</label>
+                                <select id="f-order" class="form-select form-select-sm">
+                                    <option value="priority">Prioridad</option>
+                                    <option value="updated_desc">Actualización (recientes primero)</option>
+                                    <option value="created_desc">Creación (recientes primero)</option>
+                                    <option value="created_asc">Creación (antiguas primero)</option>
+                                    <option value="position">Posición/Nivel</option>
+                                </select>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="taskManager.clearFilters()">Limpiar</button>
+                                <button class="btn btn-sm btn-primary" onclick="taskManager.applyFilters()">Aplicar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <button class="btn btn-success me-2" onclick="showCreateTaskModal()">
                     <i class="fas fa-plus me-2"></i>Nueva Tarea
                 </button>

@@ -683,6 +683,84 @@ class TaskManager {
         container.appendChild(column);
     }
 
+    async applyFilters() {
+        try {
+            const prios = ['high','medium','low'].filter(p => document.getElementById(`f-prio-${p}`)?.checked);
+            const statusSel = document.getElementById('f-status');
+            const gmailSel = document.getElementById('f-gmail');
+            const levelMin = document.getElementById('f-level-min').value;
+            const levelMax = document.getElementById('f-level-max').value;
+            const orderSel = document.getElementById('f-order');
+
+            const formData = new FormData();
+            formData.append('action', 'filter');
+            if (prios.length) formData.append('priorities', prios.join(','));
+            if (statusSel) formData.append('status', statusSel.value);
+            if (gmailSel && gmailSel.value !== 'any') formData.append('has_gmail', gmailSel.value);
+            if (levelMin) formData.append('level_min', levelMin);
+            if (levelMax) formData.append('level_max', levelMax);
+            if (orderSel) formData.append('order', orderSel.value);
+
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.renderFilteredResults(data.data);
+            } else {
+                this.showNotification(data.message || 'Error aplicando filtros', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error aplicando filtros', 'error');
+        }
+    }
+
+    clearFilters() {
+        ['f-prio-high','f-prio-medium','f-prio-low'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = true; });
+        const s = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        s('f-status','all'); s('f-gmail','any'); s('f-level-min',''); s('f-level-max',''); s('f-order','priority');
+        this.loadTasks();
+    }
+
+    async quickUrgentFilter() {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'filter');
+            formData.append('priorities', 'high');
+            formData.append('status', 'pending');
+            formData.append('order', 'priority');
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.renderFilteredResults(data.data, { title: 'Urgentes (Alta prioridad, pendientes)' });
+            }
+        } catch (e) {
+            this.showNotification('Error filtrando urgentes', 'error');
+        }
+    }
+
+    renderFilteredResults(tasks, opts = {}) {
+        const container = document.getElementById('columnsContainer');
+        container.innerHTML = '';
+        const column = document.createElement('div');
+        column.className = 'task-column';
+        const title = opts.title || 'Resultados (filtros)';
+        const header = document.createElement('div');
+        header.className = 'column-header';
+        header.innerHTML = `
+            <h6 class="mb-2">
+                ${title}
+                <span class="chip chip-count ms-2"><i class="fas fa-list-check"></i> ${tasks.length}</span>
+            </h6>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" onclick="taskManager.loadTasks()"><i class="fas fa-times"></i> Cerrar</button>
+            </div>`;
+        column.appendChild(header);
+        const taskList = document.createElement('div');
+        taskList.className = 'task-list';
+        tasks.forEach(task => taskList.appendChild(this.createTaskElement(task)));
+        column.appendChild(taskList);
+        container.appendChild(column);
+    }
+
     showStats() {
         const statsRow = document.getElementById('statsRow');
         statsRow.style.display = statsRow.style.display === 'none' ? 'block' : 'none';

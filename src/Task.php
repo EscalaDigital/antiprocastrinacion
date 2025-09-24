@@ -368,6 +368,98 @@ class Task {
         $stmt = $this->db->query($sql);
         return $stmt->fetch();
     }
+
+    /**
+     * Filtra tareas por múltiples criterios
+     * $filters = [
+     *   'priorities' => ['high','medium','low'],
+     *   'status' => 'all'|'pending'|'completed',
+     *   'has_gmail' => true|false|null,
+     *   'level_min' => int|null,
+     *   'level_max' => int|null,
+     *   'text' => string|null,
+     *   'order' => 'priority'|'updated_desc'|'created_asc'|'created_desc'|'position'
+     * ]
+     */
+    public function filter($filters = []) {
+        $where = [];
+        $params = [];
+
+        // Prioridades
+        if (!empty($filters['priorities']) && is_array($filters['priorities'])) {
+            $vals = array_values(array_intersect($filters['priorities'], ['high','medium','low']));
+            if (!empty($vals)) {
+                $in = implode(',', array_fill(0, count($vals), '?'));
+                $where[] = "priority IN ($in)";
+                foreach ($vals as $v) $params[] = $v;
+            }
+        }
+
+        // Estado
+        if (!empty($filters['status']) && in_array($filters['status'], ['pending','completed'], true)) {
+            if ($filters['status'] === 'pending') {
+                $where[] = 'is_completed = FALSE';
+            } else {
+                $where[] = 'is_completed = TRUE';
+            }
+        }
+
+        // Tiene Gmail
+        if (array_key_exists('has_gmail', $filters) && $filters['has_gmail'] !== null) {
+            if ($filters['has_gmail']) {
+                $where[] = '(gmail_message_id IS NOT NULL OR gmail_thread_id IS NOT NULL OR (gmail_url IS NOT NULL AND gmail_url <> ""))';
+            } else {
+                $where[] = '(gmail_message_id IS NULL AND gmail_thread_id IS NULL AND (gmail_url IS NULL OR gmail_url = ""))';
+            }
+        }
+
+        // Niveles
+        if (!empty($filters['level_min'])) {
+            $where[] = 'column_level >= ?';
+            $params[] = (int)$filters['level_min'];
+        }
+        if (!empty($filters['level_max'])) {
+            $where[] = 'column_level <= ?';
+            $params[] = (int)$filters['level_max'];
+        }
+
+        // Texto
+        if (!empty($filters['text'])) {
+            $where[] = '(title LIKE ? OR description LIKE ?)';
+            $text = '%' . $filters['text'] . '%';
+            $params[] = $text;
+            $params[] = $text;
+        }
+
+        $sql = 'SELECT * FROM tasks';
+        if (!empty($where)) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+
+        // Orden
+        $order = $filters['order'] ?? 'position';
+        switch ($order) {
+            case 'priority':
+                $sql .= " ORDER BY CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END ASC, updated_at DESC";
+                break;
+            case 'updated_desc':
+                $sql .= ' ORDER BY updated_at DESC';
+                break;
+            case 'created_asc':
+                $sql .= ' ORDER BY created_at ASC';
+                break;
+            case 'created_desc':
+                $sql .= ' ORDER BY created_at DESC';
+                break;
+            case 'position':
+            default:
+                $sql .= ' ORDER BY column_level ASC, position_order ASC';
+                break;
+        }
+
+        $stmt = $this->db->query($sql, $params);
+        return $stmt->fetchAll();
+    }
     
     /**
      * Busca tareas por término
