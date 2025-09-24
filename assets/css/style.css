@@ -139,6 +139,11 @@ body {
 .drop-target { outline: 2px dashed var(--primary); outline-offset: 2px; }
 .task-list.drop-target { background: rgba(13,110,253,0.06); }
 
+/* Indicadores before/after/into usando data-drop-zone */
+.task-item.drop-target[data-drop-zone="before"] { box-shadow: inset 0 3px 0 0 var(--primary-color); }
+.task-item.drop-target[data-drop-zone="after"] { box-shadow: inset 0 -3px 0 0 var(--primary-color); }
+.task-item.drop-target[data-drop-zone="into"] { box-shadow: inset 0 0 0 2px var(--primary-color); }
+
 .task-item.completed .task-title {
     text-decoration: line-through;
     color: #6c757d;

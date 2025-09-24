@@ -267,22 +267,34 @@ class TaskManager {
             element.classList.remove('dragging');
             document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
         });
-        // Permitir soltar sobre otra tarea para convertirla en padre
+        // Permitir soltar sobre otra tarea: before/after/into según zona
         element.addEventListener('dragover', (ev) => {
             ev.preventDefault();
             ev.dataTransfer.dropEffect = 'move';
+            const rect = element.getBoundingClientRect();
+            const offsetY = ev.clientY - rect.top;
+            const zoneTop = rect.height * 0.25;
+            const zoneBottom = rect.height * 0.75;
             element.classList.add('drop-target');
+            element.dataset.dropZone = offsetY < zoneTop ? 'before' : (offsetY > zoneBottom ? 'after' : 'into');
         });
         element.addEventListener('dragleave', () => {
             element.classList.remove('drop-target');
+            delete element.dataset.dropZone;
         });
         element.addEventListener('drop', async (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
+            const placement = element.dataset.dropZone || 'into';
             element.classList.remove('drop-target');
+            delete element.dataset.dropZone;
             const draggedId = parseInt(ev.dataTransfer.getData('text/plain'), 10);
             if (!draggedId || draggedId === task.id) return;
-            await this.moveTask(draggedId, task.id);
+            if (placement === 'into') {
+                await this.moveTask(draggedId, task.id);
+            } else {
+                await this.moveRelative(draggedId, task.id, placement);
+            }
         });
 
         return element;
@@ -330,6 +342,27 @@ class TaskManager {
             }
         } catch (e) {
             this.showNotification('Error moviendo la tarea', 'error');
+        }
+    }
+
+    async moveRelative(id, targetId, placement) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'move_relative');
+            formData.append('id', String(id));
+            formData.append('target_id', String(targetId));
+            formData.append('placement', placement);
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.showNotification('Tarea reordenada', 'success');
+                await this.loadTasks();
+                await this.loadStats();
+            } else {
+                this.showNotification(data.message || 'No se pudo reordenar', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error reordenando', 'error');
         }
     }
 

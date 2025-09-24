@@ -277,6 +277,83 @@ class Task {
         }
         return $result;
     }
+
+    /**
+     * Mueve una tarea relativa a otra: before | after | into
+     */
+    public function moveRelative($id, $targetId, $placement) {
+        $task = $this->getById($id);
+        $target = $this->getById($targetId);
+        if (!$task || !$target) throw new Exception('Tarea destino o origen no encontrada');
+
+        $placement = strtolower((string)$placement);
+        if (!in_array($placement, ['before','after','into'], true)) {
+            throw new Exception('Posición inválida');
+        }
+
+        if ($placement === 'into') {
+            // Validar ciclos y determinar nuevo nivel
+            $desc = $this->collectDescendantIds($id);
+            if (in_array((int)$targetId, $desc, true)) {
+                throw new Exception('No puedes mover una tarea dentro de su propio subárbol');
+            }
+            $newParentId = (int)$target['id'];
+            $newLevel = ((int)$target['column_level']) + 1;
+            $levelDelta = $newLevel - (int)$task['column_level'];
+            $newPosition = $this->getNextPosition($newParentId, $newLevel);
+
+            $this->db->query(
+                "UPDATE tasks SET parent_id = ?, column_level = ?, position_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                [$newParentId, $newLevel, $newPosition, $id]
+            );
+            if ($levelDelta !== 0) {
+                foreach ($this->collectDescendantIds($id) as $childId) {
+                    $this->db->query("UPDATE tasks SET column_level = column_level + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$levelDelta, $childId]);
+                }
+            }
+            $this->renormalizePositions($newParentId);
+            return true;
+        }
+
+        // before/after: hereda el padre del target
+        $newParentId = $target['parent_id'];
+        $newLevel = (int)$target['column_level'];
+        $levelDelta = $newLevel - (int)$task['column_level'];
+
+        // Mover temporalmente con posición intermedia para luego renumerar
+        $tempPosition = ((int)$target['position_order']) + ($placement === 'before' ? -0.5 : 0.5);
+
+        // Actualizar padre/nivel/pos
+        $this->db->query(
+            "UPDATE tasks SET parent_id = ?, column_level = ?, position_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [$newParentId, $newLevel, $tempPosition, $id]
+        );
+
+        if ($levelDelta !== 0) {
+            foreach ($this->collectDescendantIds($id) as $childId) {
+                $this->db->query("UPDATE tasks SET column_level = column_level + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [$levelDelta, $childId]);
+            }
+        }
+
+        $this->renormalizePositions($newParentId);
+        return true;
+    }
+
+    /**
+     * Reindexa position_order secuencialmente dentro del grupo de hermanos (padre dado)
+     */
+    private function renormalizePositions($parentId) {
+        if ($parentId === null) {
+            $stmt = $this->db->query("SELECT id FROM tasks WHERE parent_id IS NULL ORDER BY position_order ASC, id ASC");
+        } else {
+            $stmt = $this->db->query("SELECT id FROM tasks WHERE parent_id = ? ORDER BY position_order ASC, id ASC", [$parentId]);
+        }
+        $rows = $stmt->fetchAll();
+        $i = 1;
+        foreach ($rows as $row) {
+            $this->db->query("UPDATE tasks SET position_order = ? WHERE id = ?", [$i++, $row['id']]);
+        }
+    }
     
     /**
      * Obtiene estadísticas de tareas

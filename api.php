@@ -349,6 +349,19 @@ try {
                 throw new Exception($ex->getMessage());
             }
             break;
+
+        case 'move_relative':
+            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+            $targetId = isset($_POST['target_id']) ? (int)$_POST['target_id'] : 0;
+            $placement = $_POST['placement'] ?? '';
+            if (!$id || !$targetId || !$placement) throw new Exception('Parámetros inválidos');
+            $ok = $taskModel->moveRelative($id, $targetId, $placement);
+            if ($ok) {
+                $response = [ 'success' => true, 'message' => 'Tarea movida' ];
+            } else {
+                throw new Exception('No se pudo mover la tarea');
+            }
+            break;
             
         default:
             throw new Exception('Acción no válida');
