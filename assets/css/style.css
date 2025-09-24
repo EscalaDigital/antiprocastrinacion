@@ -673,3 +673,25 @@ body{background:var(--bg); color:var(--text);}
     .task-column[data-level="5"]::before{background:#dbeafe;}
     .task-column[data-level="5"] .column-header{background:#ffffff; border-color:#f3f7ff;}
 
+/* Botón icon-only para toolbar */
+.btn-icon{padding:8px 10px; width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px;}
+.btn-icon i{font-size:16px;}
+
+/* Chips (Gmail, contadores) */
+.chip{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:.75rem; line-height:1; border:1px solid var(--border); color:var(--text-muted); background:var(--surface);} 
+.chip i{font-size:.8rem;}
+.chip-gmail{border-color:#fed7aa; background:#fff7ed; color:#9a3412;} /* naranja claro con borde sutil */
+
+/* Chip contador por nivel */
+.chip-count{border-color:#dbeafe; background:#eff6ff; color:#1e3a8a;}
+.task-column[data-level="1"] .chip-count{border-color:#bfdbfe; background:#e0f2fe; color:#0c4a6e;}
+.task-column[data-level="2"] .chip-count{border-color:#dbeafe; background:#eff6ff; color:#1e3a8a;}
+.task-column[data-level="3"] .chip-count{border-color:#e5efff; background:#f1f5ff; color:#1d4ed8;}
+.task-column[data-level="4"] .chip-count{border-color:#ecf3ff; background:#f5f8ff; color:#2563eb;}
+.task-column[data-level="5"] .chip-count{border-color:#f0f6ff; background:#f8fbff; color:#3b82f6;}
+
+/* Dropdown kebab en cabecera de tarea */
+.task-header .dropdown .btn{border-color:var(--border); color:var(--text-muted);}
+.task-header .dropdown .btn:hover{background:var(--surface-muted); color:var(--text);} 
+.task-header .dropdown-menu{min-width: 200px;}
+

@@ -82,11 +82,11 @@ try {
                 </div>
             </div>
             <div class="col-md-6 text-end">
-                <button class="btn btn-success" onclick="showCreateTaskModal()">
+                <button class="btn btn-success me-2" onclick="showCreateTaskModal()">
                     <i class="fas fa-plus me-2"></i>Nueva Tarea
                 </button>
-                <button class="btn btn-info" onclick="loadTasks()">
-                    <i class="fas fa-refresh me-2"></i>Recargar
+                <button class="btn btn-info btn-icon" onclick="loadTasks()" title="Recargar">
+                    <i class="fas fa-rotate-right"></i>
                 </button>
             </div>
         </div>

@@ -149,7 +149,7 @@ class TaskManager {
         header.innerHTML = `
             <h6 class="mb-2">
                 ${level === 1 ? 'Tareas Principales' : `Subtareas de: ${parentTask ? this.escapeHtml(parentTask.title) : ''}`}
-                <span class="badge bg-secondary ms-2">${tasks.length}</span>
+                <span class="chip chip-count ms-2"><i class="fas fa-list-check"></i> ${tasks.length}</span>
             </h6>
             <button class="btn btn-sm btn-outline-primary" onclick="taskManager.showCreateTaskModal(${parentTask ? parentTask.id : null})">
                 <i class="fas fa-plus"></i> Agregar
@@ -178,54 +178,42 @@ class TaskManager {
         
         element.innerHTML = `
             <div class="task-content">
-                <div class="task-header">
+                <div class="task-header align-items-center">
                     <input type="checkbox" class="form-check-input me-2" 
                            ${task.is_completed ? 'checked' : ''} 
                            onchange="taskManager.toggleTaskComplete(${task.id})">
+                    <span class="task-chips me-2"></span>
                     <span class="task-title">${this.escapeHtml(task.title)}</span>
-                    ${task.has_children ? 
-                        `<span class="badge bg-info ms-2"><i class="fas fa-chevron-right"></i></span>` : ''
-                    }
-                </div>
-                ${task.description ? 
-                    `<div class="task-description text-muted small mt-1">${this.escapeHtml(task.description)}</div>` : ''
-                }
-                    <div class="task-actions mt-2">
-                    <button class="btn btn-sm btn-outline-primary" onclick="taskManager.editTask(${task.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="taskManager.showCreateTaskModal(${task.id})">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" title="Crear en Calendar" onclick="taskManager.createCalendarEvent(${task.id})">
-                        <i class="far fa-calendar-plus"></i>
-                    </button>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Opciones de impresión">
-                            <i class="fas fa-print"></i>
+                    ${task.has_children ? `<span class="badge bg-info ms-2"><i class="fas fa-chevron-right"></i></span>` : ''}
+                    <div class="ms-auto dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" title="Más acciones">
+                            <i class="fas fa-ellipsis"></i>
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTaskOnly(${task.id})">
-                                <i class="fas fa-file-alt me-2"></i>Solo esta tarea
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTaskPDF(${task.id})">
-                                <i class="fas fa-file-pdf me-2"></i>Generar PDF
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTask(${task.id})">
-                                <i class="fas fa-sitemap me-2"></i>Con subtareas
-                            </a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.editTask(${task.id})"><i class="fas fa-edit me-2"></i>Editar</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.createCalendarEvent(${task.id})"><i class="far fa-calendar-plus me-2"></i>Crear en Calendar</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header">Impresión</li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTaskOnly(${task.id})"><i class="fas fa-file-alt me-2"></i>Solo esta tarea</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTaskPDF(${task.id})"><i class="fas fa-file-pdf me-2"></i>Generar PDF</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.printTask(${task.id})"><i class="fas fa-sitemap me-2"></i>Con subtareas</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="taskManager.deleteTask(${task.id})"><i class="fas fa-trash me-2"></i>Eliminar</a></li>
                         </ul>
                     </div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="taskManager.deleteTask(${task.id})">
-                        <i class="fas fa-trash"></i>
+                </div>
+                ${task.description ? `<div class="task-description text-muted small mt-1">${this.escapeHtml(task.description)}</div>` : ''}
+                <div class="task-actions mt-2">
+                    <button class="btn btn-sm btn-outline-success" onclick="taskManager.showCreateTaskModal(${task.id})">
+                        <i class="fas fa-plus me-1"></i> Subtarea
                     </button>
                 </div>
             </div>
         `;
 
-        // Insertar icono de Gmail si aplica
+        // Insertar chip de Gmail si aplica
         try {
-            const actions = element.querySelector('.task-actions');
+            const chips = element.querySelector('.task-chips');
             let gmailHref = null;
             if (task.gmail_thread_id) {
                 gmailHref = `https://mail.google.com/mail/u/0/#all/${task.gmail_thread_id}`;
@@ -239,14 +227,14 @@ class TaskManager {
                 const spaceIndex = rest.search(/\s/);
                 gmailHref = spaceIndex === -1 ? rest : rest.slice(0, spaceIndex);
             }
-            if (gmailHref && actions) {
+            if (gmailHref && chips) {
                 const a = document.createElement('a');
-                a.className = 'btn btn-sm btn-outline-danger';
+                a.className = 'chip chip-gmail';
                 a.href = gmailHref;
                 a.target = '_blank';
                 a.title = 'Abrir en Gmail';
                 a.innerHTML = '<i class="fas fa-envelope"></i>';
-                actions.prepend(a);
+                chips.appendChild(a);
             }
         } catch (e) {}
 
@@ -542,7 +530,7 @@ class TaskManager {
         header.innerHTML = `
             <h6 class="mb-2">
                 Resultados de búsqueda
-                <span class="badge bg-secondary ms-2">${tasks.length}</span>
+                <span class="chip chip-count ms-2"><i class="fas fa-list-check"></i> ${tasks.length}</span>
             </h6>
             <button class="btn btn-sm btn-outline-secondary" onclick="taskManager.loadTasks()">
                 <i class="fas fa-times"></i> Limpiar
