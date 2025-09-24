@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/src/Task.php';
+require_once __DIR__ . '/src/GoogleService.php';
 
 header('Content-Type: application/json');
 
@@ -14,6 +15,100 @@ try {
     $action = $_POST['action'] ?? $_GET['action'] ?? '';
     
     switch ($action) {
+        case 'create_from_gmail':
+            $gmailInput = $_POST['gmail'] ?? '';
+            $parentId = $_POST['parent_id'] ?? null;
+            if (!$gmailInput) {
+                throw new Exception('Falta el parámetro gmail (URL o ID)');
+            }
+            $google = new GoogleService();
+            if (!$google->isConnected()) {
+                throw new Exception('Conecta con Google primero');
+            }
+            $parsed = GoogleService::parseGmailUrl($gmailInput);
+            $message = null;
+            $gmailThreadId = null;
+            $gmailMessageId = null;
+            try {
+                if (!empty($parsed['thread_id'])) {
+                    $gmailThreadId = $parsed['thread_id'];
+                    $message = $google->getGmailThreadFirstMessage($gmailThreadId);
+                } else {
+                    // Asumimos messageId directo
+                    $gmailMessageId = $gmailInput;
+                    $message = $google->getGmailMessageById($gmailMessageId);
+                }
+            } catch (Throwable $e) {
+                throw new Exception('No se pudo leer el correo de Gmail: ' . $e->getMessage());
+            }
+
+            // Extraer asunto, from y fecha
+            $subject = 'Correo sin asunto';
+            $from = '';
+            $date = '';
+            if ($message) {
+                $gmailMessageId = $gmailMessageId ?: $message->getId();
+                $gmailThreadId = $gmailThreadId ?: $message->getThreadId();
+                $headers = $message->getPayload()->getHeaders();
+                foreach ($headers as $h) {
+                    $name = strtolower($h->getName());
+                    if ($name === 'subject') $subject = $h->getValue();
+                    if ($name === 'from') $from = $h->getValue();
+                    if ($name === 'date') $date = $h->getValue();
+                }
+            }
+
+            $gmailUrl = $gmailThreadId ? ('https://mail.google.com/mail/u/0/#all/' . $gmailThreadId) : '';
+            $descParts = [];
+            if ($from) $descParts[] = 'De: ' . $from;
+            if ($date) $descParts[] = 'Fecha: ' . $date;
+            if ($gmailUrl) $descParts[] = 'Gmail: ' . $gmailUrl;
+            $description = implode("\n", $descParts);
+
+            $newId = $taskModel->create($subject, $description, $parentId ?: null, 'medium');
+            // Guardar IDs de Gmail
+            $taskModel->updateGmailRefs($newId, $gmailMessageId, $gmailThreadId);
+
+            $response = [
+                'success' => true,
+                'message' => 'Tarea creada desde Gmail',
+                'data' => ['id' => $newId]
+            ];
+            break;
+
+        case 'create_google_task':
+            $id = $_POST['id'] ?? 0;
+            $t = $taskModel->getById($id);
+            if (!$t) throw new Exception('Tarea no encontrada');
+            $google = new GoogleService();
+            if (!$google->isConnected()) throw new Exception('Conecta con Google primero');
+            $gtaskId = $google->createGoogleTask($t['title'], (string)($t['description'] ?? ''));
+            if ($gtaskId) {
+                $taskModel->updateGoogleTaskId($id, $gtaskId);
+                $response = ['success' => true, 'message' => 'Creada en Google Tasks', 'data' => ['google_tasks_id' => $gtaskId]];
+            } else {
+                throw new Exception('No se pudo crear en Google Tasks');
+            }
+            break;
+
+        case 'create_calendar_event':
+            $id = $_POST['id'] ?? 0;
+            $t = $taskModel->getById($id);
+            if (!$t) throw new Exception('Tarea no encontrada');
+            $startIso = $_POST['start'] ?? null;
+            $endIso = $_POST['end'] ?? null;
+            $start = $startIso ? new DateTime($startIso) : new DateTime();
+            $end = $endIso ? new DateTime($endIso) : (new DateTime('+1 hour'));
+            $google = new GoogleService();
+            if (!$google->isConnected()) throw new Exception('Conecta con Google primero');
+            $eventId = $google->createCalendarEvent($t['title'], (string)($t['description'] ?? ''), $start, $end);
+            if ($eventId) {
+                $taskModel->updateGoogleCalendarId($id, $eventId);
+                $response = ['success' => true, 'message' => 'Evento creado en Calendar', 'data' => ['google_calendar_event_id' => $eventId]];
+            } else {
+                throw new Exception('No se pudo crear el evento en Calendar');
+            }
+            break;
         case 'create':
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';

@@ -114,7 +114,7 @@ body {
     transition: var(--transition);
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    overflow: visible; /* permitir que los menús salgan del contenedor de la tarea */
 }
 
 .task-item:hover {
@@ -195,17 +195,7 @@ body {
     margin-bottom: 8px;
 }
 
-.task-actions {
-    display: flex;
-    gap: 5px;
-    opacity: 0;
-    transition: var(--transition);
-}
-
-.task-item:hover .task-actions,
-.task-item.selected .task-actions {
-    opacity: 1;
-}
+.task-actions { display: flex; gap: 5px; }
 
 .task-actions .btn {
     padding: 4px 8px;
@@ -262,6 +252,12 @@ body {
 
 .btn-group.show .dropdown-menu {
     z-index: 1060 !important;
+}
+
+/* Portal dropdown (cuando JS lo convierte en fixed) */
+.dropdown-portal {
+    position: fixed !important;
+    z-index: 2000 !important;
 }
 
 /* Tooltip personalizado para botón de impresión */

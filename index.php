@@ -48,6 +48,9 @@ try {
             </a>
             
             <div class="navbar-nav ms-auto">
+                <a class="btn btn-outline-light me-2" href="/antiprocastrinacion/api/google/auth.php">
+                    <i class="fab fa-google me-1"></i> Conectar Google
+                </a>
                 <div class="nav-item dropdown">
                     <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="fas fa-cog"></i> Opciones
@@ -58,6 +61,8 @@ try {
                         <li><a class="dropdown-item" href="#" onclick="printTasks()"><i class="fas fa-print me-2"></i>Imprimir</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="showHelp()"><i class="fas fa-question-circle me-2"></i>Ayuda</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="taskManager.createTaskFromGmailPrompt()"><i class="fab fa-google me-2"></i>Crear tarea desde Gmail</a></li>
                     </ul>
                 </div>
             </div>

@@ -15,6 +15,7 @@ class TaskManager {
         this.setupEventListeners();
         this.loadTasks();
         this.loadStats();
+    this.setupDropdownPortals();
     }
 
     setupEventListeners() {
@@ -197,6 +198,19 @@ class TaskManager {
                         <i class="fas fa-plus"></i>
                     </button>
                     <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Integraciones Google">
+                            <i class="fab fa-google"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.createGoogleTask(${task.id})">
+                                <i class="fas fa-tasks me-2"></i>Crear en Google Tasks
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="taskManager.createCalendarEvent(${task.id})">
+                                <i class="far fa-calendar-plus me-2"></i>Crear en Calendar
+                            </a></li>
+                        </ul>
+                    </div>
+                    <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Opciones de impresión">
                             <i class="fas fa-print"></i>
                         </button>
@@ -237,6 +251,7 @@ class TaskManager {
         // Seleccionar nueva tarea
         element.classList.add('selected');
         this.selectedTask = task;
+        // nada
 
         // Remover todas las columnas posteriores al nivel actual
         const container = document.getElementById('columnsContainer');
@@ -263,6 +278,42 @@ class TaskManager {
                 console.error('Error loading children:', error);
             }
         }
+    }
+
+    setupDropdownPortals() {
+        // Colocar los dropdowns en body para evitar clipping
+        document.addEventListener('shown.bs.dropdown', (e) => {
+            const toggle = e.target; // button
+            const menu = toggle.nextElementSibling;
+            if (!menu || !menu.classList.contains('dropdown-menu')) return;
+            const placeholder = document.createElement('div');
+            placeholder.style.display = 'none';
+            menu.parentNode.insertBefore(placeholder, menu);
+            document.body.appendChild(menu);
+            menu.classList.add('dropdown-portal');
+            const rect = toggle.getBoundingClientRect();
+            const top = rect.bottom + window.scrollY;
+            const left = rect.left + window.scrollX;
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
+            menu.dataset.portal = '1';
+            menu._placeholder = placeholder;
+        });
+
+        document.addEventListener('hide.bs.dropdown', (e) => {
+            const toggle = e.target;
+            const menu = toggle.nextElementSibling;
+            if (!menu || menu.dataset.portal !== '1') return;
+            menu.classList.remove('dropdown-portal');
+            menu.style.top = '';
+            menu.style.left = '';
+            if (menu._placeholder) {
+                menu._placeholder.parentNode.insertBefore(menu, menu._placeholder);
+                menu._placeholder.remove();
+                delete menu._placeholder;
+            }
+            delete menu.dataset.portal;
+        });
     }
 
     showCreateTaskModal(parentId = null) {
@@ -342,6 +393,40 @@ class TaskManager {
             }
         } catch (error) {
             this.showNotification('Error al guardar la tarea', 'error');
+        }
+    }
+
+    async createGoogleTask(taskId) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'create_google_task');
+            formData.append('id', taskId);
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.showNotification('Creada en Google Tasks', 'success');
+            } else {
+                this.showNotification(data.message || 'Error creando en Google Tasks', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error creando en Google Tasks', 'error');
+        }
+    }
+
+    async createCalendarEvent(taskId) {
+        try {
+            const formData = new FormData();
+            formData.append('action', 'create_calendar_event');
+            formData.append('id', taskId);
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.showNotification('Evento creado en Calendar', 'success');
+            } else {
+                this.showNotification(data.message || 'Error creando evento', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error creando evento', 'error');
         }
     }
 
@@ -1054,6 +1139,27 @@ class TaskManager {
 
     navigateRight() {
         // Implementación futura: navegar entre columnas
+    }
+
+    async createTaskFromGmailPrompt(parentId = null) {
+        const input = prompt('Pega la URL de Gmail o el ID del hilo/mensaje:');
+        if (!input) return;
+        try {
+            const formData = new FormData();
+            formData.append('action', 'create_from_gmail');
+            formData.append('gmail', input);
+            if (parentId) formData.append('parent_id', parentId);
+            const response = await fetch('api.php', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (data.success) {
+                this.showNotification('Tarea creada desde Gmail', 'success');
+                this.loadTasks();
+            } else {
+                this.showNotification(data.message || 'No se pudo crear desde Gmail', 'error');
+            }
+        } catch (e) {
+            this.showNotification('Error conectando con Gmail', 'error');
+        }
     }
 }
 

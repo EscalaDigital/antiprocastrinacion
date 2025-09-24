@@ -29,6 +29,19 @@ antiprocastrinacion/
 4. Accede a `http://localhost/antiprocastrinacion/test.php` para verificar la configuración
 5. Accede a `http://localhost/antiprocastrinacion/` para usar la aplicación
 
+### Integración con Google (Tasks/Calendar)
+- Instala dependencias con Composer:
+	- En PowerShell:
+		```powershell
+		cd c:\xampp\htdocs\antiprocastrinacion
+		composer install
+		```
+- Coloca tu JSON de credenciales de Google en `config/google_client.json` (contenido del archivo descargado de Google Cloud Console).
+- En Google Cloud Console, añade los redirect URIs:
+	- `http://localhost/antiprocastrinacion/api/google/callback.php`
+	- `http://127.0.0.1/antiprocastrinacion/api/google/callback.php`
+- Inicia la conexión desde el botón “Conectar Google” en la barra superior.
+
 ## Uso
 
 - Crea una tarea principal

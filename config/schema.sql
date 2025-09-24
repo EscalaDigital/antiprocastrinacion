@@ -13,6 +13,11 @@ CREATE TABLE tasks (
     column_level INT DEFAULT 1,
     is_completed BOOLEAN DEFAULT FALSE,
     priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    -- Integraciones opcionales
+    google_tasks_id VARCHAR(128) NULL,
+    google_calendar_event_id VARCHAR(128) NULL,
+    gmail_message_id VARCHAR(128) NULL,
+    gmail_thread_id VARCHAR(128) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     completed_at TIMESTAMP NULL,
@@ -24,7 +29,9 @@ CREATE TABLE tasks (
     INDEX idx_parent_id (parent_id),
     INDEX idx_column_level (column_level),
     INDEX idx_completed (is_completed),
-    INDEX idx_position (position_order)
+    INDEX idx_position (position_order),
+    INDEX idx_gtask (google_tasks_id),
+    INDEX idx_gcal (google_calendar_event_id)
 ) ENGINE=InnoDB;
 
 -- Tabla de configuración del usuario (para futuras características)
@@ -34,6 +41,20 @@ CREATE TABLE user_settings (
     setting_value TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Tokens OAuth por usuario (single-user por ahora)
+CREATE TABLE IF NOT EXISTS user_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    provider VARCHAR(32) NOT NULL DEFAULT 'google',
+    google_user_id VARCHAR(64) NOT NULL,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT,
+    token_expires_at DATETIME NULL,
+    scopes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_provider_user (provider, google_user_id)
 ) ENGINE=InnoDB;
 
 -- Insertar configuraciones por defecto

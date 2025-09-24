@@ -148,6 +148,24 @@ class Task {
         $stmt = $this->db->query($sql, [$newPosition, $id]);
         return $stmt->rowCount() > 0;
     }
+
+    public function updateGmailRefs($id, $gmailMessageId = null, $gmailThreadId = null) {
+        $sql = "UPDATE tasks SET gmail_message_id = ?, gmail_thread_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        $stmt = $this->db->query($sql, [$gmailMessageId, $gmailThreadId, $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updateGoogleTaskId($id, $googleTaskId) {
+        $sql = "UPDATE tasks SET google_tasks_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        $stmt = $this->db->query($sql, [$googleTaskId, $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updateGoogleCalendarId($id, $eventId) {
+        $sql = "UPDATE tasks SET google_calendar_event_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        $stmt = $this->db->query($sql, [$eventId, $id]);
+        return $stmt->rowCount() > 0;
+    }
     
     /**
      * Obtiene la siguiente posición en orden para una tarea
