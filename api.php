@@ -138,6 +138,7 @@ try {
         case 'create':
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
+            $gmailUrl = $_POST['gmail_url'] ?? '';
             $parentId = $_POST['parent_id'] ?? null;
             $priority = $_POST['priority'] ?? 'medium';
             
@@ -146,6 +147,17 @@ try {
             }
             
             $taskId = $taskModel->create($title, $description, $parentId, $priority);
+            if ($gmailUrl !== '') {
+                $taskModel->updateGmailUrl($taskId, $gmailUrl);
+            }
+
+            // Si viene una URL de Gmail, parsear y guardar referencias
+            if (!empty($gmailUrl)) {
+                $parsed = GoogleService::parseGmailUrl($gmailUrl);
+                $gmailThreadId = $parsed['thread_id'] ?? null;
+                $gmailMessageId = $parsed['message_id'] ?? null;
+                $taskModel->updateGmailRefs($taskId, $gmailMessageId, $gmailThreadId);
+            }
             $response = [
                 'success' => true,
                 'message' => 'Tarea creada exitosamente',
@@ -171,6 +183,7 @@ try {
             $id = $_POST['id'] ?? 0;
             $title = $_POST['title'] ?? '';
             $description = $_POST['description'] ?? '';
+            $gmailUrl = $_POST['gmail_url'] ?? '';
             $priority = $_POST['priority'] ?? 'medium';
             
             if (empty($title)) {
@@ -180,6 +193,15 @@ try {
             $updated = $taskModel->update($id, $title, $description, $priority);
             
             if ($updated) {
+                if ($gmailUrl !== '') {
+                    $taskModel->updateGmailUrl($id, $gmailUrl);
+                }
+                if ($gmailUrl !== '') {
+                    $parsed = GoogleService::parseGmailUrl($gmailUrl);
+                    $gmailThreadId = $parsed['thread_id'] ?? null;
+                    $gmailMessageId = $parsed['message_id'] ?? null;
+                    $taskModel->updateGmailRefs($id, $gmailMessageId, $gmailThreadId);
+                }
                 $response = [
                     'success' => true,
                     'message' => 'Tarea actualizada exitosamente'

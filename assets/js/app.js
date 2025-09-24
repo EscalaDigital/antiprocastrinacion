@@ -190,7 +190,7 @@ class TaskManager {
                 ${task.description ? 
                     `<div class="task-description text-muted small mt-1">${this.escapeHtml(task.description)}</div>` : ''
                 }
-                <div class="task-actions mt-2">
+                    <div class="task-actions mt-2">
                     <button class="btn btn-sm btn-outline-primary" onclick="taskManager.editTask(${task.id})">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -232,6 +232,33 @@ class TaskManager {
                 </div>
             </div>
         `;
+
+        // Insertar icono de Gmail si aplica
+        try {
+            const actions = element.querySelector('.task-actions');
+            let gmailHref = null;
+            if (task.gmail_thread_id) {
+                gmailHref = `https://mail.google.com/mail/u/0/#all/${task.gmail_thread_id}`;
+            } else if (task.gmail_message_id) {
+                gmailHref = `https://mail.google.com/mail/u/0/#all/${task.gmail_message_id}`;
+            } else if (task.gmail_url) {
+                gmailHref = task.gmail_url;
+            } else if (task.description && task.description.indexOf('https://mail.google.com/') !== -1) {
+                const start = task.description.indexOf('https://mail.google.com/');
+                const rest = task.description.slice(start);
+                const spaceIndex = rest.search(/\s/);
+                gmailHref = spaceIndex === -1 ? rest : rest.slice(0, spaceIndex);
+            }
+            if (gmailHref && actions) {
+                const a = document.createElement('a');
+                a.className = 'btn btn-sm btn-outline-danger';
+                a.href = gmailHref;
+                a.target = '_blank';
+                a.title = 'Abrir en Gmail';
+                a.innerHTML = '<i class="fas fa-envelope"></i>';
+                actions.prepend(a);
+            }
+        } catch (e) {}
 
         // Hacer seleccionable
         element.addEventListener('click', (e) => {
@@ -322,6 +349,7 @@ class TaskManager {
         document.getElementById('parentId').value = parentId || '';
         document.getElementById('taskTitle').value = '';
         document.getElementById('taskDescription').value = '';
+    document.getElementById('taskGmailUrl').value = '';
         document.getElementById('taskPriority').value = 'medium';
         
         const modal = new bootstrap.Modal(document.getElementById('taskModal'));
@@ -345,6 +373,7 @@ class TaskManager {
                 document.getElementById('parentId').value = task.parent_id || '';
                 document.getElementById('taskTitle').value = task.title;
                 document.getElementById('taskDescription').value = task.description || '';
+                    document.getElementById('taskGmailUrl').value = task.gmail_url || (task.gmail_thread_id ? `https://mail.google.com/mail/u/0/#all/${task.gmail_thread_id}` : '');
                 document.getElementById('taskPriority').value = task.priority;
                 
                 const modal = new bootstrap.Modal(document.getElementById('taskModal'));
@@ -360,6 +389,7 @@ class TaskManager {
         const parentId = document.getElementById('parentId').value;
         const title = document.getElementById('taskTitle').value.trim();
         const description = document.getElementById('taskDescription').value.trim();
+    const gmailUrl = document.getElementById('taskGmailUrl').value.trim();
         const priority = document.getElementById('taskPriority').value;
 
         if (!title) {
@@ -374,6 +404,7 @@ class TaskManager {
             if (parentId) formData.append('parent_id', parentId);
             formData.append('title', title);
             formData.append('description', description);
+            if (gmailUrl) formData.append('gmail_url', gmailUrl);
             formData.append('priority', priority);
 
             const response = await fetch('api.php', {

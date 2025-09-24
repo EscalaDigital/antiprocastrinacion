@@ -151,6 +151,12 @@ try {
                             <label for="taskDescription" class="form-label">Descripción</label>
                             <textarea class="form-control" id="taskDescription" rows="3"></textarea>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="taskGmailUrl" class="form-label">URL de Gmail</label>
+                            <input type="url" class="form-control" id="taskGmailUrl" placeholder="Pega aquí la URL del correo (opcional)">
+                            <div class="form-text">Si se añade, aparecerá un icono de email en la tarea.</div>
+                        </div>
                         
                         <div class="mb-3">
                             <label for="taskPriority" class="form-label">Prioridad</label>

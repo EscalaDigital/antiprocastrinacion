@@ -10,6 +10,16 @@ class Task {
     
     public function __construct() {
         $this->db = Database::getInstance();
+        // Asegurar columna gmail_url si no existe
+        try {
+            $stmt = $this->db->query("SHOW COLUMNS FROM tasks LIKE 'gmail_url'");
+            $col = $stmt->fetch();
+            if (!$col) {
+                $this->db->query("ALTER TABLE tasks ADD COLUMN gmail_url TEXT NULL AFTER description");
+            }
+        } catch (Throwable $e) {
+            // Ignorar si no se puede migrar automáticamente
+        }
     }
     
     /**
@@ -164,6 +174,12 @@ class Task {
     public function updateGoogleCalendarId($id, $eventId) {
         $sql = "UPDATE tasks SET google_calendar_event_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
         $stmt = $this->db->query($sql, [$eventId, $id]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updateGmailUrl($id, $gmailUrl) {
+        $sql = "UPDATE tasks SET gmail_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        $stmt = $this->db->query($sql, [$gmailUrl !== '' ? $gmailUrl : null, $id]);
         return $stmt->rowCount() > 0;
     }
     
