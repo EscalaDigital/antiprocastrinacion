@@ -553,3 +553,123 @@ body {
 @media (prefers-color-scheme: dark) {
     /* Estilos para modo oscuro */
 }
+
+/* ===== Fase 1: Overrides de diseño minimalista ===== */
+:root{
+    /* Paleta clara con azules y naranjas suaves */
+    --bg:#f7fbff; --surface:#ffffff; --surface-muted:#f1f5f9;
+    --text:#0f172a; --text-muted:#475569; --border:#e2e8f0;
+    --primary:#3b82f6; --success:#16a34a; --warning:#f59e0b; --danger:#ef4444; --info:#0ea5e9;
+    /* Mapear a variables ya usadas en estilos previos */
+    --primary-color: var(--primary);
+    --success-color: var(--success);
+    --warning-color: var(--warning);
+    --danger-color: var(--danger);
+    --info-color: var(--info);
+    --radius:8px; --shadow-xs:0 1px 2px rgba(0,0,0,.06); --shadow-sm:0 2px 8px rgba(0,0,0,.08);
+}
+
+body{background:var(--bg); color:var(--text);} 
+
+/* Navbar clara sin gradientes (manteniendo clases Bootstrap existentes) */
+.navbar{background:var(--surface)!important; border-bottom:1px solid var(--border);} 
+.navbar .navbar-brand{color:var(--text)!important; font-weight:600;}
+.navbar .navbar-brand i{color:var(--primary);} 
+.navbar-dark .navbar-nav .nav-link, 
+.navbar-dark .navbar-text, 
+.navbar-dark .navbar-brand{ color:var(--text)!important; }
+.navbar .btn-outline-light{ 
+    color:var(--text)!important; 
+    border-color:var(--border)!important; 
+    background:transparent!important; 
+}
+.navbar .btn-outline-light:hover{ 
+    background:var(--surface-muted)!important; 
+    border-color:#cbd5e1!important; 
+}
+
+/* Contenedor y columnas: eliminar degradados y sombras pesadas */
+#columnsContainer{background:transparent; gap:16px; padding:16px; border-radius:var(--radius);} 
+.task-column{background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-xs);}
+.column-header{border-bottom:1px solid var(--border);} 
+.badge.bg-secondary{background:var(--surface-muted); color:var(--text-muted);} 
+
+/* Tarjetas de tarea: planas y limpias */
+.task-item{border:1px solid var(--border); box-shadow:none; transition:background .15s, border-color .15s, box-shadow .15s, transform .15s;}
+.task-item:hover{background:#f8fafc; transform:none; box-shadow:var(--shadow-sm); border-color:#dbe3ea;}
+.task-item.selected{background:#eef2ff; border-color:#c7d2fe; box-shadow:0 0 0 2px rgba(37,99,235,.15);} 
+.task-item.completed{opacity:.85; background:#f6f7f9;} 
+.task-title{color:var(--text);} 
+.task-description{color:var(--text-muted);} 
+
+/* Indicador de prioridad como barra inferior sutil */
+.task-item.priority-high::before,
+.task-item.priority-medium::before,
+.task-item.priority-low::before{
+    top:auto; bottom:-1px; left:0; height:2px; width:100%;
+}
+
+/* Botones en acciones más sutiles */
+.task-actions .btn{border-color:var(--border); color:var(--text-muted); background:transparent;}
+.task-actions .btn:hover{border-color:#cbd5e1; color:var(--text);} 
+.task-actions .btn-outline-info{border-color:var(--border); color:var(--text-muted);} 
+.task-actions .btn-outline-info:hover{background:var(--surface-muted); border-color:#cbd5e1; color:var(--text);} 
+
+/* Acento naranja en botón informativo (p.ej. Recargar) */
+.btn-info{background-color:#fb923c; border-color:#fb923c; color:#0f172a;}
+.btn-info:hover{background-color:#f97316; border-color:#f97316; color:#0b1220;}
+
+/* Dropdowns/Toasts coherentes */
+.dropdown-menu{border:1px solid var(--border); box-shadow:var(--shadow-sm);} 
+.toast{box-shadow:var(--shadow-sm); border:1px solid var(--border);} 
+
+/* Modales e inputs */
+.modal-header{background:var(--surface); color:var(--text); border-bottom:1px solid var(--border);} 
+.modal-content{box-shadow:var(--shadow-sm);} 
+.form-control:focus,.form-select:focus{border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.15);} 
+
+/* Anillo de foco visible para accesibilidad */
+*:focus-visible{outline:2px solid rgba(37,99,235,.35); outline-offset:2px;} 
+
+/* Forzar estética clara aunque el SO esté en oscuro */
+@media (prefers-color-scheme: dark){
+    :root{--bg:#f7fbff; --surface:#ffffff; --surface-muted:#f1f5f9; --text:#0f172a; --text-muted:#475569; --border:#e2e8f0;}
+    .navbar{border-color:var(--border);} 
+    .task-item:hover{background:#f8fafc; border-color:#dbe3ea;} 
+    .dropdown-menu{background:var(--surface);} 
+}
+
+    /* Acentos por nivel de columna: más marcada la principal y más claro en profundidad */
+    .task-column{position:relative;}
+    .task-column::before{
+        content:""; position:absolute; left:-1px; top:0; bottom:0; width:4px; border-radius:4px;
+        background:var(--border);
+    }
+    .task-column .column-header{background:transparent; border-radius:6px; padding:8px 10px;}
+
+    /* Nivel 1 (principal): azul destacado */
+    .task-column[data-level="1"]{border-color:#bfdbfe;}
+    .task-column[data-level="1"]::before{background:#2563eb;}
+    .task-column[data-level="1"] .column-header{background:#eef5ff; border-color:#cfe3ff;}
+    .task-column[data-level="1"] .column-header h6{color:#0f172a;}
+
+    /* Nivel 2: más claro */
+    .task-column[data-level="2"]{border-color:#dbeafe;}
+    .task-column[data-level="2"]::before{background:#60a5fa;}
+    .task-column[data-level="2"] .column-header{background:#f3f8ff; border-color:#e2efff;}
+
+    /* Nivel 3: aún más claro */
+    .task-column[data-level="3"]{border-color:#e5efff;}
+    .task-column[data-level="3"]::before{background:#93c5fd;}
+    .task-column[data-level="3"] .column-header{background:#f7faff; border-color:#ecf3ff;}
+
+    /* Nivel 4 */
+    .task-column[data-level="4"]{border-color:#ecf3ff;}
+    .task-column[data-level="4"]::before{background:#bfdbfe;}
+    .task-column[data-level="4"] .column-header{background:#fafcff; border-color:#f0f6ff;}
+
+    /* Nivel 5 */
+    .task-column[data-level="5"]{border-color:#f0f6ff;}
+    .task-column[data-level="5"]::before{background:#dbeafe;}
+    .task-column[data-level="5"] .column-header{background:#ffffff; border-color:#f3f7ff;}
+
