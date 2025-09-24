@@ -197,19 +197,9 @@ class TaskManager {
                     <button class="btn btn-sm btn-outline-success" onclick="taskManager.showCreateTaskModal(${task.id})">
                         <i class="fas fa-plus"></i>
                     </button>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Integraciones Google">
-                            <i class="fab fa-google"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="taskManager.createGoogleTask(${task.id})">
-                                <i class="fas fa-tasks me-2"></i>Crear en Google Tasks
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="taskManager.createCalendarEvent(${task.id})">
-                                <i class="far fa-calendar-plus me-2"></i>Crear en Calendar
-                            </a></li>
-                        </ul>
-                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" title="Crear en Calendar" onclick="taskManager.createCalendarEvent(${task.id})">
+                        <i class="far fa-calendar-plus"></i>
+                    </button>
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Opciones de impresión">
                             <i class="fas fa-print"></i>
