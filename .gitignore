@@ -1,3 +1,8 @@
 vendor/
 composer.lock
 config/google_client.json
+antiprocastrinacion.zip
+antiprocrastinacion.sql
+configuracionservidor.docx
+connection_test.php
+config/database_prod.php

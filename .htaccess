@@ -1,18 +1,23 @@
-RewriteEngine On
-
-# Redirigir todas las peticiones del directorio raíz al index.php
-DirectoryIndex index.php
-
-# Permitir acceso a los archivos de assets
-RewriteRule ^assets/(.*)$ assets/$1 [L]
-
-# Permitir acceso al API
-RewriteRule ^api\.php$ api.php [L]
-
-# Permitir acceso al setup
-RewriteRule ^setup\.php$ setup.php [L]
-
-# Redirigir cualquier otra petición al index.php
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+# BEGIN RN PHP_VERSION
+<IfModule mime_module>
+    AddHandler application/x-httpd-alt-php82___lsphp .php
+</IfModule>
+# END RN PHP_VERSION
+RewriteEngine On
+
+# Redirigir todas las peticiones del directorio raíz al index.php
+DirectoryIndex index.php
+
+# Permitir acceso a los archivos de assets
+RewriteRule ^assets/(.*)$ assets/$1 [L]
+
+# Permitir acceso al API
+RewriteRule ^api\.php$ api.php [L]
+
+# Permitir acceso al setup
+RewriteRule ^setup\.php$ setup.php [L]
+
+# Redirigir cualquier otra petición al index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]

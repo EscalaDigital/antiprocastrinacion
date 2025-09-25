@@ -5,12 +5,14 @@
 
 class DatabaseConfig {
     // Configuración para XAMPP local
+    /*
     const HOST = 'localhost';
     const DB_NAME = 'antiprocrastinacion';
     const USERNAME = 'root';
     const PASSWORD = '';
-    const CHARSET = 'utf8mb4';
-    
+    const CHARSET = 'utf8mb4';*/
+
+ 
     /**
      * Obtiene la cadena de conexión PDO
      */
