@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/src/Auth.php';
+Auth::requireLogin();
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

@@ -3,21 +3,29 @@
     AddHandler application/x-httpd-alt-php82___lsphp .php
 </IfModule>
 # END RN PHP_VERSION
-RewriteEngine On
-
-# Redirigir todas las peticiones del directorio raíz al index.php
-DirectoryIndex index.php
-
-# Permitir acceso a los archivos de assets
-RewriteRule ^assets/(.*)$ assets/$1 [L]
-
-# Permitir acceso al API
-RewriteRule ^api\.php$ api.php [L]
-
-# Permitir acceso al setup
-RewriteRule ^setup\.php$ setup.php [L]
-
-# Redirigir cualquier otra petición al index.php
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteEngine On
+
+# Redirigir todas las peticiones del directorio raíz al index.php
+DirectoryIndex index.php
+
+# Permitir acceso a los archivos de assets
+RewriteRule ^assets/(.*)$ assets/$1 [L]
+
+# Permitir acceso al API
+RewriteRule ^api\.php$ api.php [L]
+
+# Permitir acceso al setup (muestra guía, pero ahora está protegido por sesión)
+RewriteRule ^setup\.php$ setup.php [L]
+
+# Permitir acceso a login y logout
+RewriteRule ^login\.php$ login.php [L]
+RewriteRule ^logout\.php$ logout.php [L]
+
+# Forzar que index.html pase por index.php (y por el guard de login)
+RewriteRule ^index\.html$ index.php [L]
+
+# Redirigir cualquier otra petición al index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]

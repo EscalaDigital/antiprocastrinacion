@@ -2,6 +2,8 @@
 /**
  * Script de prueba para verificar la configuración
  */
+require_once __DIR__ . '/src/Auth.php';
+Auth::requireLogin();
 
 echo "<h2>Verificación de la configuración</h2>";
 

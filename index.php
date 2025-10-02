@@ -4,6 +4,10 @@
  * Redirige a index.html y maneja la configuración inicial
  */
 
+// Autenticación (protección de acceso)
+require_once __DIR__ . '/src/Auth.php';
+Auth::requireLogin();
+
 // Verificar si la base de datos existe y está configurada
 require_once __DIR__ . '/src/Database.php';
 
@@ -56,6 +60,11 @@ try {
                         <i class="fas fa-cog"></i> Opciones
                     </button>
                     <ul class="dropdown-menu">
+                        <li class="dropdown-item-text text-muted">
+                            <i class="fas fa-user me-2"></i><?php echo htmlspecialchars($_SESSION['username'] ?? ''); ?>
+                        </li>
+                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-right-from-bracket me-2"></i>Salir</a></li>
+                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="showStats()"><i class="fas fa-chart-bar me-2"></i>Estadísticas</a></li>
                         <li><a class="dropdown-item" href="#" onclick="exportTasks()"><i class="fas fa-download me-2"></i>Exportar</a></li>
                         <li><a class="dropdown-item" href="#" onclick="printTasks()"><i class="fas fa-print me-2"></i>Imprimir</a></li>

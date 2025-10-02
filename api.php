@@ -3,6 +3,9 @@
  * Controlador de API para operaciones AJAX
  */
 
+require_once __DIR__ . '/src/Auth.php';
+Auth::requireLogin();
+
 require_once __DIR__ . '/src/Task.php';
 require_once __DIR__ . '/src/GoogleService.php';
 

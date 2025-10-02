@@ -3,6 +3,8 @@
  * Script de prueba para verificar las funciones corregidas
  */
 
+require_once __DIR__ . '/src/Auth.php';
+Auth::requireLogin();
 require_once __DIR__ . '/src/Task.php';
 
 header('Content-Type: application/json');
